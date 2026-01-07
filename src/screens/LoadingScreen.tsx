@@ -46,13 +46,13 @@ export function LoadingScreen() {
         // If still processing, continue polling
       } catch (error) {
         console.error("Status check failed:", error);
-        if (
-          isMounted &&
-          error &&
-          typeof error === "object" &&
-          "type" in error
-        ) {
-          setError(error as ErrorType);
+        if (isMounted) {
+          setError({
+            type: ErrorType.NETWORK_ERROR,
+            message: error instanceof Error ? error.message : "Unknown error",
+            userMessage: "Failed to check generation status. Please try again.",
+            retryable: true,
+          });
           setIsProcessing(false);
           clearInterval(intervalId);
         }
