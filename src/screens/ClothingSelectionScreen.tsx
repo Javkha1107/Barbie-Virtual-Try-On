@@ -383,7 +383,7 @@ export function ClothingSelectionScreen() {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate("/recording")}
-                className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-[200px] rounded-full"
+                className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-50 rounded-full"
               >
                 <RotateCcw className="w-6 h-6" />
                 Record Again
@@ -392,7 +392,7 @@ export function ClothingSelectionScreen() {
                 size="lg"
                 disabled={!selectedId}
                 onClick={handleStart}
-                className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-[200px] rounded-full"
+                className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-50 rounded-full"
               >
                 Generate
               </Button>
