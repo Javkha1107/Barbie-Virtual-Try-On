@@ -12,9 +12,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center rounded-full font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 font-heading",
+          "inline-flex items-center justify-cente cursor-pointer rounded-full active:scale-95 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 font-heading",
           {
-            "bg-linear-to-r from-pink-500 to-purple-500 text-white hover:scale-105 shadow-lg":
+            "bg-linear-to-r from-pink-500 to-purple-500 text-white shadow-lg":
               variant === "default" || variant === "barbie",
             "border-2 border-pink-500 bg-white text-pink-500 hover:bg-pink-50":
               variant === "outline",

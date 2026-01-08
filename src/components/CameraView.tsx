@@ -14,13 +14,13 @@ export function CameraView({ stream }: CameraViewProps) {
   }, [stream]);
 
   return (
-    <div className="relative w-full aspect-[9/16] max-h-[80vh] mx-auto">
+    <div className="relative aspect-9/16 max-h-[80vh] mx-auto">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className="w-full h-full object-cover rounded-2xl shadow-2xl"
+        className="h-full w-auto object-cover rounded-2xl shadow-2xl"
       />
     </div>
   );

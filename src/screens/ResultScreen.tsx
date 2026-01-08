@@ -15,12 +15,29 @@ export function ResultScreen() {
     location.state?.videoUrl ||
     (recordedVideo ? URL.createObjectURL(recordedVideo.blob) : "");
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!videoUrl) return;
-    const a = document.createElement("a");
-    a.href = videoUrl;
-    a.download = `barbie-fitting-${Date.now()}.mp4`;
-    a.click();
+
+    try {
+      // 外部URLの場合はfetchでblobを取得してからダウンロード
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `barbie-fitting-${Date.now()}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // メモリ解放
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    } catch (error) {
+      console.error("Download failed:", error);
+      // フォールバック: 新しいタブで開く
+      window.open(videoUrl, "_blank");
+    }
   };
 
   return (
@@ -57,19 +74,16 @@ export function ResultScreen() {
 
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-8 relative z-10 py-4">
         {/* Title */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center space-y-2 md:space-y-4 px-2"
         >
-          <h1 className="text-3xl md:text-5xl font-bold text-pink-primary font-heading leading-tight">
+          <h2 className="text-3xl md:text-5xl font-bold text-pink-primary font-heading leading-tight">
             ✨ Your Look is Ready! ✨
-          </h1>
-          <p className="text-base md:text-xl text-gray-700">
-            Looking fabulous!
-          </p>
-        </motion.div>
+          </h2>
+        </motion.div> */}
 
         {/* Video Result */}
         <motion.div
@@ -90,7 +104,7 @@ export function ResultScreen() {
                 <img
                   src={selectedClothing.thumbnailUrl}
                   alt={selectedClothing.name}
-                  className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg md:rounded-xl flex-shrink-0"
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover object-top rounded-lg md:rounded-xl shrink-0"
                 />
                 <div className="min-w-0">
                   <h3 className="text-lg md:text-xl font-semibold text-pink-primary truncate">

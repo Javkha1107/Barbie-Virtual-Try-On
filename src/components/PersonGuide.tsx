@@ -10,7 +10,7 @@ export function PersonGuide() {
     >
       <div className="flex flex-col items-center size-full justify-between pt-10">
 
-        <img src='/1.png' alt="Person Guide" className="h-8/9" />
+        <img src='/1.png' alt="Person Guide" className="h-full" />
       </div>
     </motion.div>
   );

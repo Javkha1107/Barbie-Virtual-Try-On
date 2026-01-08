@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Star, Wand2, ArrowLeft, RotateCcw } from "lucide-react";
+import { Sparkles, Star, Wand2, ArrowLeft /* RotateCcw */ } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { ClothingGrid } from "../components/ClothingGrid";
 import { Button } from "../components/ui/button";
@@ -10,7 +10,7 @@ import { StarDecoration } from "../components/decorations/StarDecoration";
 import { HeartDecoration } from "../components/decorations/HeartDecoration";
 
 // Toggle this to enable/disable API calls
-const USE_REAL_API = false;
+const USE_REAL_API = true;
 
 export function ClothingSelectionScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function ClothingSelectionScreen() {
     // Real API mode
     try {
       // Step 1: Get presigned URL for upload
-      setUploadProgress(10);
+      setUploadProgress(15);
 
       // Determine file extension based on mime type
       const fileExtension = recordedVideo.mimeType.includes("webm")
@@ -84,9 +84,9 @@ export function ClothingSelectionScreen() {
       }
 
       const { uploadUrl, inputKey } = await uploadResponse.json();
-      setUploadProgress(20);
+      setUploadProgress(25);
 
-      // Step 2: Upload video to S3 using presigned URL
+      // Step 2: Upload video to S3 using presigned URL (already 9:16 from recording)
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl, true);
@@ -94,7 +94,7 @@ export function ClothingSelectionScreen() {
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
-            const percentComplete = 20 + (event.loaded / event.total) * 50; // 20% to 70%
+            const percentComplete = 25 + (event.loaded / event.total) * 50; // 25% to 75%
             setUploadProgress(Math.round(percentComplete));
           }
         };
@@ -111,10 +111,10 @@ export function ClothingSelectionScreen() {
           reject(new Error("Upload failed"));
         };
 
-        xhr.send(recordedVideo.blob);
+        xhr.send(recordedVideo.blob); // Send recorded video (already 9:16)
       });
 
-      setUploadProgress(70);
+      setUploadProgress(75);
 
       // Step 3: Process video with selected garment
       const processResponse = await fetch(
@@ -186,7 +186,9 @@ export function ClothingSelectionScreen() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-5xl mx-auto space-y-4 md:space-y-6 relative z-10 py-2 md:py-4 flex flex-col h-full"
+        className={`w-full max-w-5xl mx-auto space-y-4 md:space-y-6 relative z-10 flex flex-col h-full ${
+          isUploading ? "px-8 md:px-16 py-8 md:py-16" : "py-2 md:py-4"
+        }`}
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -194,34 +196,33 @@ export function ClothingSelectionScreen() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-center space-y-1 md:space-y-2 px-2 shrink-0"
         >
-          <div className="relative flex items-center justify-center">
-            {/* Back button */}
-            <motion.button
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              onClick={() => navigate("/")}
-              className="absolute left-0 p-2 md:p-3 rounded-full bg-white/80 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 group"
-            >
-              <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-pink-primary group-hover:scale-110 transition-transform" />
-            </motion.button>
+          {!isUploading && (
+            <div className="relative flex items-center justify-center">
+              {/* Back button */}
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                onClick={() => navigate("/")}
+                className="absolute left-0 p-2 md:p-3 rounded-full bg-white/80 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 group"
+              >
+                <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-pink-primary group-hover:scale-110 transition-transform" />
+              </motion.button>
 
-            <h1 className="text-xl sm:text-3xl md:text-5xl font-bold text-pink-primary font-heading flex items-center justify-center gap-1 sm:gap-2 md:gap-3 leading-tight">
-              <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" />
-              <span className="px-1">Choose Your Outfit</span>
-              <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" />
-            </h1>
-          </div>
-          <p className="text-sm sm:text-base md:text-xl text-gray-700">
-            Find the perfect look for you
-          </p>
+              <h1 className="text-xl sm:text-3xl md:text-5xl font-bold text-pink-primary font-heading flex items-center justify-center gap-1 sm:gap-2 md:gap-3 leading-tight">
+                <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" />
+                <span className="px-1">Choose Your Outfit</span>
+                <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" />
+              </h1>
+            </div>
+          )}
         </motion.div>
 
         {isUploading ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-linear-to-br from-pink-400/30 via-purple-400/30 to-pink-500/30 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-12 shadow-2xl border-2 border-pink-300/50 flex-1 flex items-center justify-center"
+            className="bg-linear-to-br from-pink-400/30 via-purple-400/30 to-pink-500/30 backdrop-blur-md rounded-2xl md:rounded-3xl p-6 md:p-12 shadow-2xl border-2 border-pink-300/50 m-auto flex items-center justify-center"
           >
             <div className="text-center space-y-6 md:space-y-8">
               <motion.div className="relative h-24 md:h-32 flex items-center justify-center">
@@ -384,7 +385,7 @@ export function ClothingSelectionScreen() {
                 onClick={() => navigate("/recording")}
                 className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-50 rounded-full"
               >
-                <RotateCcw className="w-6 h-6" />
+                {/* <RotateCcw className="w-6 h-6" /> */}
                 Record Again
               </Button>
               <Button
