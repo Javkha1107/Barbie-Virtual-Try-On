@@ -269,7 +269,7 @@ export function RecordingScreen() {
 
           setRecordedVideo({
             blob,
-            duration: 4000,
+            duration: 5000,
             mimeType: mediaRecorder.mimeType,
           });
 

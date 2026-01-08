@@ -17,7 +17,7 @@ export function RecordingIndicator({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="absolute top-10 right-4 z-20 flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg"
+      className="absolute top-5 right-1/2 translate-x-1/2 z-20 flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg"
     >
       <motion.div
         animate={{ scale: [1, 1.2, 1] }}

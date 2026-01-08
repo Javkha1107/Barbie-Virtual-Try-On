@@ -186,9 +186,8 @@ export function ClothingSelectionScreen() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className={`w-full max-w-5xl mx-auto space-y-4 md:space-y-6 relative z-10 flex flex-col h-full ${
-          isUploading ? "px-8 md:px-16 py-8 md:py-16" : "py-2 md:py-4"
-        }`}
+        className={`w-full max-w-5xl mx-auto space-y-4 md:space-y-6 relative z-10 flex flex-col h-full ${isUploading ? "px-8 md:px-16 py-8 md:py-16" : "py-2 md:py-4"
+          }`}
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
