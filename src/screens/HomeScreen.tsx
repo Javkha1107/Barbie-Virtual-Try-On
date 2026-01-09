@@ -162,7 +162,7 @@ export function HomeScreen() {
         </div>
 
         {/* Processing indicator */}
-        {isProcessing && (
+        {/* {isProcessing && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -175,7 +175,7 @@ export function HomeScreen() {
             />
             <p className="text-sm font-semibold">Processing...</p>
           </motion.div>
-        )}
+        )} */}
       </motion.div>
     </div>
   );

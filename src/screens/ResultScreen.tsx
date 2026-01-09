@@ -102,8 +102,8 @@ export function ResultScreen() {
                 className="flex items-center gap-3 md:gap-4 p-2 md:p-3 bg-white/40 rounded-xl md:rounded-2xl"
               >
                 <img
-                  src="/public/blue.png"
-                  alt="ad"
+                  src={selectedClothing.thumbnailUrl}
+                  alt={selectedClothing.name}
                   className="w-16 h-16 md:w-20 md:h-20 object-cover object-top rounded-lg md:rounded-xl shrink-0"
                 />
                 <div className="min-w-0">
