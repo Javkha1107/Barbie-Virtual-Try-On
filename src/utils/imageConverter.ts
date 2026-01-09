@@ -14,35 +14,40 @@ export async function convertImageFormat(
   quality: number = 0.95
 ): Promise<Blob> {
   // Check if file is HEIF/HEIC format
-  const isHEIC =
-    file.type === "image/heic" ||
-    file.type === "image/heif" ||
+  const isHEICByExtension =
     file.name.toLowerCase().endsWith(".heic") ||
     file.name.toLowerCase().endsWith(".heif");
+  const isHEICByMime = file.type === "image/heic" || file.type === "image/heif";
 
   let processFile = file;
 
-  // Convert HEIC to JPEG first if needed
-  if (isHEIC) {
+  // Try to convert HEIC if needed
+  if (isHEICByExtension || isHEICByMime) {
     try {
-      const convertedBlob = await heic2any({
-        blob: file,
-        toType: "image/jpeg",
-        quality: 0.95,
-      });
+      // Only attempt heic2any conversion if file type is explicitly heic/heif
+      if (file.type === "image/heic" || file.type === "image/heif") {
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: "image/jpeg",
+          quality: 0.95,
+        });
 
-      // heic2any can return Blob or Blob[], handle both cases
-      const blob = Array.isArray(convertedBlob)
-        ? convertedBlob[0]
-        : convertedBlob;
-      processFile = new File([blob], file.name.replace(/\.heic$/i, ".jpg"), {
-        type: "image/jpeg",
-      });
-    } catch (error) {
+        // heic2any can return Blob or Blob[], handle both cases
+        const blob = Array.isArray(convertedBlob)
+          ? convertedBlob[0]
+          : convertedBlob;
+        processFile = new File([blob], file.name.replace(/\.heic$/i, ".jpg"), {
+          type: "image/jpeg",
+        });
+        console.log("HEIC converted successfully to JPEG");
+      }
+    } catch (error: unknown) {
       console.error("HEIC conversion failed:", error);
-      throw new Error(
-        "Failed to convert HEIC image. Please try a different image."
-      );
+      // If heic2any fails, try to load the image directly
+      // Some browsers/systems may have already converted it
+      console.log("Attempting to process HEIC file directly, type:", file.type);
+      // Continue with original file - canvas will attempt to load it
+      processFile = file;
     }
   }
 

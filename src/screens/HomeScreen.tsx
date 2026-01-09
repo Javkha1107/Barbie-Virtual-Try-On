@@ -31,7 +31,7 @@ export function HomeScreen() {
       // Navigate to clothing selection
       navigate("/clothing-selection");
     } catch (error) {
-      console.error("Failed to process image:", error);
+      console.error("Failed to process image:", file.type);
       alert("画像の処理に失敗しました。もう一度お試しください。");
     } finally {
       setIsProcessing(false);
