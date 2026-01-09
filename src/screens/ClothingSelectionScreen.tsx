@@ -50,6 +50,8 @@ export function ClothingSelectionScreen() {
         setIsProcessingImage(true);
 
         // Convert to PNG format
+        console.log(file.size);
+
         const convertedBlob = await convertImageFormat(file, "png");
         const dataUrl = await blobToDataUrl(convertedBlob);
 

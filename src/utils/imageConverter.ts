@@ -1,17 +1,47 @@
 import heic2any from "heic2any";
 
 /**
+ * Calculate dimensions to fit within max size while maintaining aspect ratio
+ */
+function calculateResizeDimensions(
+  width: number,
+  height: number,
+  maxWidth: number,
+  maxHeight: number
+): { width: number; height: number } {
+  let newWidth = width;
+  let newHeight = height;
+
+  if (width > maxWidth) {
+    newWidth = maxWidth;
+    newHeight = (height * maxWidth) / width;
+  }
+
+  if (newHeight > maxHeight) {
+    newHeight = maxHeight;
+    newWidth = (width * maxHeight) / height;
+  }
+
+  return { width: Math.round(newWidth), height: Math.round(newHeight) };
+}
+
+/**
  * Convert any image file to PNG or JPEG format
  * Supports HEIF/HEIC files from iPhone
+ * Automatically resizes large images to reduce file size
  * @param file - Input image file
  * @param format - Target format ('png' or 'jpeg')
  * @param quality - JPEG quality (0-1), only used for JPEG
+ * @param maxSizeKB - Maximum file size in KB (default: 500KB to account for base64 overhead)
+ * @param maxDimension - Maximum width or height in pixels (default: 1920)
  * @returns Converted image as Blob
  */
 export async function convertImageFormat(
   file: File,
   format: "png" | "jpeg" = "png",
-  quality: number = 0.95
+  quality: number = 0.85,
+  maxSizeKB: number = 500,
+  maxDimension: number = 1920
 ): Promise<Blob> {
   // Check if file is HEIF/HEIC format
   const isHEICByExtension =
@@ -63,10 +93,29 @@ export async function convertImageFormat(
 
       img.onload = () => {
         try {
-          // Create canvas with image dimensions
+          // Calculate new dimensions if image is too large
+          const originalWidth = img.width;
+          const originalHeight = img.height;
+          const { width, height } = calculateResizeDimensions(
+            originalWidth,
+            originalHeight,
+            maxDimension,
+            maxDimension
+          );
+
+          const needsResize =
+            width !== originalWidth || height !== originalHeight;
+
+          if (needsResize) {
+            console.log(
+              `Resizing image from ${originalWidth}x${originalHeight} to ${width}x${height}`
+            );
+          }
+
+          // Create canvas with calculated dimensions
           const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = width;
+          canvas.height = height;
 
           const ctx = canvas.getContext("2d");
           if (!ctx) {
@@ -74,21 +123,106 @@ export async function convertImageFormat(
             return;
           }
 
-          // Draw image on canvas
-          ctx.drawImage(img, 0, 0);
+          // Use high-quality image smoothing
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
 
-          // Convert to blob
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error("Failed to convert image"));
+          // Draw image on canvas (resized if needed)
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Function to convert with quality adjustment
+          const convertWithQuality = (
+            currentQuality: number,
+            currentMaxDimension: number
+          ) => {
+            // If we need to resize further, recalculate dimensions
+            if (currentMaxDimension < maxDimension) {
+              const newDimensions = calculateResizeDimensions(
+                originalWidth,
+                originalHeight,
+                currentMaxDimension,
+                currentMaxDimension
+              );
+              canvas.width = newDimensions.width;
+              canvas.height = newDimensions.height;
+
+              // Redraw with new dimensions
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.drawImage(
+                  img,
+                  0,
+                  0,
+                  newDimensions.width,
+                  newDimensions.height
+                );
               }
-            },
-            format === "jpeg" ? "image/jpeg" : "image/png",
-            quality
-          );
+
+              console.log(
+                `Further resizing to ${newDimensions.width}x${newDimensions.height}`
+              );
+            }
+
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error("Failed to convert image"));
+                  return;
+                }
+
+                const fileSizeKB = blob.size / 1024;
+                console.log(
+                  `Image size: ${fileSizeKB.toFixed(
+                    2
+                  )}KB (quality: ${currentQuality}, max dimension: ${currentMaxDimension})`
+                );
+
+                // If file is still too large, try to reduce further
+                if (fileSizeKB > maxSizeKB) {
+                  // First try reducing quality (for JPEG)
+                  if (currentQuality > 0.4 && format === "jpeg") {
+                    const newQuality = Math.max(0.4, currentQuality - 0.15);
+                    console.log(
+                      `File too large (${fileSizeKB.toFixed(
+                        2
+                      )}KB > ${maxSizeKB}KB), reducing quality to ${newQuality}`
+                    );
+                    convertWithQuality(newQuality, currentMaxDimension);
+                  }
+                  // Then try reducing dimensions
+                  else if (currentMaxDimension > 800) {
+                    const newMaxDimension = Math.max(
+                      800,
+                      Math.floor(currentMaxDimension * 0.75)
+                    );
+                    console.log(
+                      `File too large (${fileSizeKB.toFixed(
+                        2
+                      )}KB > ${maxSizeKB}KB), reducing max dimension to ${newMaxDimension}`
+                    );
+                    convertWithQuality(currentQuality, newMaxDimension);
+                  } else {
+                    // Can't reduce further, return what we have
+                    console.warn(
+                      `Unable to reduce file size below ${maxSizeKB}KB, final size: ${fileSizeKB.toFixed(
+                        2
+                      )}KB`
+                    );
+                    resolve(blob);
+                  }
+                } else {
+                  resolve(blob);
+                }
+              },
+              format === "jpeg" ? "image/jpeg" : "image/png",
+              currentQuality
+            );
+          };
+
+          // Start conversion with initial quality and dimensions
+          convertWithQuality(quality, maxDimension);
         } catch (error) {
           reject(error);
         }
