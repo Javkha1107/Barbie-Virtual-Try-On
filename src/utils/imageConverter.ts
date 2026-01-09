@@ -1,5 +1,8 @@
+import heic2any from "heic2any";
+
 /**
  * Convert any image file to PNG or JPEG format
+ * Supports HEIF/HEIC files from iPhone
  * @param file - Input image file
  * @param format - Target format ('png' or 'jpeg')
  * @param quality - JPEG quality (0-1), only used for JPEG
@@ -10,6 +13,39 @@ export async function convertImageFormat(
   format: "png" | "jpeg" = "png",
   quality: number = 0.95
 ): Promise<Blob> {
+  // Check if file is HEIF/HEIC format
+  const isHEIC =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    file.name.toLowerCase().endsWith(".heic") ||
+    file.name.toLowerCase().endsWith(".heif");
+
+  let processFile = file;
+
+  // Convert HEIC to JPEG first if needed
+  if (isHEIC) {
+    try {
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.95,
+      });
+
+      // heic2any can return Blob or Blob[], handle both cases
+      const blob = Array.isArray(convertedBlob)
+        ? convertedBlob[0]
+        : convertedBlob;
+      processFile = new File([blob], file.name.replace(/\.heic$/i, ".jpg"), {
+        type: "image/jpeg",
+      });
+    } catch (error) {
+      console.error("HEIC conversion failed:", error);
+      throw new Error(
+        "Failed to convert HEIC image. Please try a different image."
+      );
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
@@ -64,7 +100,7 @@ export async function convertImageFormat(
       reject(new Error("Failed to read file"));
     };
 
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(processFile);
   });
 }
 
