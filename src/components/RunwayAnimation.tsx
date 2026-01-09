@@ -54,7 +54,7 @@ export function RunwayAnimation({
         </div>
 
         {videoUrl && !isGenerating && (
-          <Button onClick={handleDownload} className="w-full" variant="outline">
+          <Button onClick={handleDownload} className="w-full" variant="custom">
             <Download className="mr-2 h-4 w-4" />
             動画をダウンロード
           </Button>

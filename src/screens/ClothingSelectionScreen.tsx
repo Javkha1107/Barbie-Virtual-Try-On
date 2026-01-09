@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, Star, Wand2, ArrowLeft /* RotateCcw */ } from "lucide-react";
@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { clothingItems } from "../data/clothingData";
 import { StarDecoration } from "../components/decorations/StarDecoration";
 import { HeartDecoration } from "../components/decorations/HeartDecoration";
+import { convertImageFormat, blobToDataUrl } from "../utils/imageConverter";
 
 // Toggle this to enable/disable API calls
 const USE_REAL_API = true;
@@ -16,16 +17,62 @@ export function ClothingSelectionScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const { setSelectedClothing, recordedVideo, setIsProcessing } =
-    useAppContext();
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    setSelectedClothing,
+    recordedVideo,
+    uploadedImage,
+    isImageMode,
+    setIsProcessing,
+    setUploadedImage,
+  } = useAppContext();
   const navigate = useNavigate();
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
   };
 
+  const handleUploadAgain = () => {
+    if (isImageMode) {
+      fileInputRef.current?.click();
+    } else {
+      navigate("/recording");
+    }
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      try {
+        setIsProcessingImage(true);
+
+        // Convert to PNG format
+        const convertedBlob = await convertImageFormat(file, "png");
+        const dataUrl = await blobToDataUrl(convertedBlob);
+
+        setUploadedImage({
+          blob: convertedBlob,
+          dataUrl,
+          fileName: file.name,
+        });
+
+        setIsProcessingImage(false);
+      } catch (error) {
+        console.error("Failed to process image:", error);
+        alert("画像の処理に失敗しました。もう一度お試しください。");
+        setIsProcessingImage(false);
+      }
+    }
+    // Reset input value to allow selecting the same file again
+    event.target.value = "";
+  };
+
   const handleStart = async () => {
-    if (!selectedId || !recordedVideo) return;
+    if (!selectedId) return;
+    if (!recordedVideo && !uploadedImage) return;
 
     const selected = clothingItems.find((item) => item.id === selectedId);
     if (!selected) return;
@@ -48,106 +95,153 @@ export function ClothingSelectionScreen() {
       setIsProcessing(false);
 
       // Use recorded video as dummy result
-      const dummyVideoUrl = URL.createObjectURL(recordedVideo.blob);
-      navigate("/result", { state: { videoUrl: dummyVideoUrl } });
+      if (recordedVideo) {
+        const dummyVideoUrl = URL.createObjectURL(recordedVideo.blob);
+        navigate("/result", { state: { videoUrl: dummyVideoUrl } });
+      }
       return;
     }
 
     // Real API mode
     try {
-      // Step 1: Get presigned URL for upload
-      setUploadProgress(15);
+      if (isImageMode && uploadedImage) {
+        // Image mode: Send image as base64 and garment ID
+        setUploadProgress(25);
 
-      // Determine file extension based on mime type
-      const fileExtension = recordedVideo.mimeType.includes("webm")
-        ? "webm"
-        : "mp4";
-      const filename = `video-${Date.now()}.${fileExtension}`;
+        // Convert image blob to base64
+        const base64Image = uploadedImage.dataUrl.split(",")[1]; // Remove data:image/png;base64, prefix
+        setUploadProgress(50);
 
-      const uploadResponse = await fetch(
-        "https://nccdhlc5bhjdk3zcmhf73mp76u0ireha.lambda-url.us-west-2.on.aws/",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            action: "create_upload",
-            filename: filename,
-            contentType: recordedVideo.mimeType,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      const { uploadUrl, inputKey } = await uploadResponse.json();
-      setUploadProgress(25);
-
-      // Step 2: Upload video to S3 using presigned URL (already 9:16 from recording)
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl, true);
-        xhr.setRequestHeader("Content-Type", recordedVideo.mimeType);
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = 25 + (event.loaded / event.total) * 50; // 25% to 75%
-            setUploadProgress(Math.round(percentComplete));
+        // Call image generation API with base64 data
+        const processResponse = await fetch(
+          "https://nccdhlc5bhjdk3zcmhf73mp76u0ireha.lambda-url.us-west-2.on.aws/",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              action: "image-only",
+              image: base64Image,
+              garmentId: selectedId,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
-        };
+        );
 
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            resolve();
-          } else {
+        if (!processResponse.ok) {
+          throw new Error("Failed to process image");
+        }
+
+        const { jobId, outputKey, resultUrl } = await processResponse.json();
+        setUploadProgress(100);
+
+        // Navigate to result screen
+        setIsUploading(false);
+        setIsProcessing(false);
+        navigate("/result", {
+          state: { videoUrl: resultUrl, jobId, outputKey },
+        });
+      } else if (recordedVideo) {
+        // Video mode: Original flow
+        setUploadProgress(15);
+
+        // Determine file extension based on mime type
+        const fileExtension = recordedVideo.mimeType.includes("webm")
+          ? "webm"
+          : "mp4";
+        const filename = `video-${Date.now()}.${fileExtension}`;
+
+        const uploadResponse = await fetch(
+          "https://nccdhlc5bhjdk3zcmhf73mp76u0ireha.lambda-url.us-west-2.on.aws/",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              action: "create_upload",
+              filename: filename,
+              contentType: recordedVideo.mimeType,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to get upload URL");
+        }
+
+        const { uploadUrl, inputKey } = await uploadResponse.json();
+        setUploadProgress(25);
+
+        // Step 2: Upload video to S3 using presigned URL (already 9:16 from recording)
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", uploadUrl, true);
+          xhr.setRequestHeader("Content-Type", recordedVideo.mimeType);
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = 25 + (event.loaded / event.total) * 50; // 25% to 75%
+              setUploadProgress(Math.round(percentComplete));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve();
+            } else {
+              reject(new Error("Upload failed"));
+            }
+          };
+
+          xhr.onerror = () => {
             reject(new Error("Upload failed"));
+          };
+
+          xhr.send(recordedVideo.blob); // Send recorded video (already 9:16)
+        });
+
+        setUploadProgress(75);
+
+        // Step 3: Process video with selected garment
+        const processResponse = await fetch(
+          "https://nccdhlc5bhjdk3zcmhf73mp76u0ireha.lambda-url.us-west-2.on.aws/",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              action: "process",
+              inputKey: inputKey,
+              garmentId: selectedId,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
-        };
+        );
 
-        xhr.onerror = () => {
-          reject(new Error("Upload failed"));
-        };
-
-        xhr.send(recordedVideo.blob); // Send recorded video (already 9:16)
-      });
-
-      setUploadProgress(75);
-
-      // Step 3: Process video with selected garment
-      const processResponse = await fetch(
-        "https://nccdhlc5bhjdk3zcmhf73mp76u0ireha.lambda-url.us-west-2.on.aws/",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            action: "process",
-            inputKey: inputKey,
-            garmentId: selectedId,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
+        if (!processResponse.ok) {
+          throw new Error("Failed to process video");
         }
-      );
 
-      if (!processResponse.ok) {
-        throw new Error("Failed to process video");
+        const { jobId, outputKey, resultUrl } = await processResponse.json();
+        setUploadProgress(100);
+
+        // Step 4: Navigate to result screen with video URL
+        setIsUploading(false);
+        setIsProcessing(false);
+        navigate("/result", {
+          state: { videoUrl: resultUrl, jobId, outputKey },
+        });
       }
-
-      const { jobId, outputKey, resultUrl } = await processResponse.json();
-      setUploadProgress(100);
-
-      // Step 4: Navigate to result screen with video URL
-      setIsUploading(false);
-      setIsProcessing(false);
-      navigate("/result", { state: { videoUrl: resultUrl, jobId, outputKey } });
     } catch (error) {
-      console.error("Error processing video:", error);
+      console.error("Error processing:", error);
       setIsUploading(false);
       setIsProcessing(false);
-      alert("Failed to process video. Please try again.");
+      alert(
+        isImageMode
+          ? "Failed to process image. Please try again."
+          : "Failed to process video. Please try again."
+      );
     }
   };
 
@@ -205,16 +299,37 @@ export function ClothingSelectionScreen() {
                 onClick={() => navigate("/")}
                 className="absolute left-0 p-2 md:p-3 rounded-full bg-white/80 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 group"
               >
-                <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-pink-primary group-hover:scale-110 transition-transform" />
+                <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-pink-400 group-hover:scale-110 transition-transform" />
               </motion.button>
 
-              <h1 className="text-xl sm:text-3xl md:text-5xl font-bold text-pink-primary font-heading flex items-center justify-center gap-1 sm:gap-2 md:gap-3 leading-tight">
-                <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" />
+              <h1 className="text-xl sm:text-xl md:text-3xl font-bold text-pink-primary font-heading flex items-center justify-center gap-1 sm:gap-2 md:gap-3 leading-tight">
+                {/* <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" /> */}
                 <span className="px-1">Choose Your Outfit</span>
-                <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" />
+                {/* <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 shrink-0" /> */}
               </h1>
             </div>
           )}
+
+          {/* Show image preview in image mode */}
+          {/* {!isUploading && isImageMode && uploadedImage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex justify-center pt-4"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-xl border-4 border-pink-300/50 max-w-xs">
+                <img
+                  src={uploadedImage.dataUrl}
+                  alt="Uploaded"
+                  className="w-full h-auto object-cover"
+                />
+                <div className="absolute top-2 right-2 bg-pink-primary/90 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  Your Photo
+                </div>
+              </div>
+            </motion.div>
+          )} */}
         </motion.div>
 
         {isUploading ? (
@@ -283,7 +398,9 @@ export function ClothingSelectionScreen() {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="flex items-center justify-center gap-2 md:gap-3 text-2xl md:text-4xl font-bold bg-linear-to-r from-pink-600 via-purple-600 to-pink-600 bg-clip-text text-transparent px-2"
                 >
-                  Preparing your video...
+                  {isImageMode
+                    ? "Preparing your image..."
+                    : "Preparing your video..."}
                 </motion.div>
               </motion.div>
 
@@ -359,7 +476,7 @@ export function ClothingSelectionScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex-1 overflow-y-auto px-2 py-2"
+              className="flex-1 overflow-y-auto px-2 py-4"
               style={{
                 maxHeight: "calc(100vh - 240px)",
                 scrollbarWidth: "thin",
@@ -376,26 +493,39 @@ export function ClothingSelectionScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex flex-col sm:flex-row justify-center gap-3 px-4 pb-4 shrink-0"
+              className="flex flex-col sm:flex-row justify-center gap-3"
             >
               <Button
                 size="lg"
-                variant="outline"
-                onClick={() => navigate("/recording")}
+                variant="custom"
+                onClick={handleUploadAgain}
+                disabled={isProcessingImage}
                 className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-50 rounded-full"
               >
                 {/* <RotateCcw className="w-6 h-6" /> */}
-                Record Again
+                {isProcessingImage
+                  ? "Processing..."
+                  : isImageMode
+                    ? "Upload Again"
+                    : "Record Again"}
               </Button>
               <Button
                 size="lg"
-                disabled={!selectedId}
+                disabled={!selectedId || isProcessingImage}
                 onClick={handleStart}
                 className="flex items-center justify-center gap-2 text-lg font-semibold py-7 w-full sm:w-auto sm:min-w-50 rounded-full"
               >
                 Generate
               </Button>
             </motion.div>
+            {/* Hidden file input for image upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
           </>
         )}
       </motion.div>

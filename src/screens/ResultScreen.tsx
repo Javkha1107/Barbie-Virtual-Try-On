@@ -41,7 +41,7 @@ export function ResultScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-pink-pastel to-purple-accent p-4 md:p-8 relative overflow-hidden">
+    <div className="h-screen bg-linear-to-br from-pink-pastel to-purple-accent relative overflow-hidden flex items-center justify-center">
       {/* Decorative elements - scaled for portrait */}
       <motion.div
         initial={{ opacity: 0, scale: 0 }}
@@ -72,7 +72,7 @@ export function ResultScreen() {
         <HeartDecoration className="absolute bottom-10 right-8 md:bottom-20 md:right-20 scale-75 md:scale-100" />
       </motion.div>
 
-      <div className="max-w-2xl mx-auto space-y-4 md:space-y-8 relative z-10 py-4">
+      <div className="w-full h-full max-w-2xl mx-auto flex flex-col py-4 px-4 md:py-6 md:px-8 relative z-10">
         {/* Title */}
         {/* <motion.div
           initial={{ opacity: 0, y: -30 }}
@@ -80,8 +80,8 @@ export function ResultScreen() {
           transition={{ duration: 0.6 }}
           className="text-center space-y-2 md:space-y-4 px-2"
         >
-          <h2 className="text-3xl md:text-5xl font-bold text-pink-primary font-heading leading-tight">
-            ✨ Your Look is Ready! ✨
+          <h2 className="text-xl md:text-3xl font-bold text-pink-primary font-heading leading-tight">
+            Your Look is Ready!
           </h2>
         </motion.div> */}
 
@@ -90,28 +90,28 @@ export function ResultScreen() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-2xl"
+          className="bg-linear-to-br from-pink-400/30 via-purple-400/30 to-pink-500/30 backdrop-blur-md rounded-2xl md:rounded-3xl p-3 md:p-4 shadow-2xl flex-1 flex flex-col min-h-0"
         >
-          <div className="space-y-4 md:space-y-6">
+          <div className="flex flex-col gap-2 md:gap-3 h-full min-h-0">
             {/* Selected Clothing Info */}
             {selectedClothing && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-pink-50 rounded-xl md:rounded-2xl"
+                className="flex items-center gap-3 md:gap-4 p-2 md:p-3 bg-white/40 rounded-xl md:rounded-2xl"
               >
                 <img
-                  src={selectedClothing.thumbnailUrl}
-                  alt={selectedClothing.name}
+                  src="/public/blue.png"
+                  alt="ad"
                   className="w-16 h-16 md:w-20 md:h-20 object-cover object-top rounded-lg md:rounded-xl shrink-0"
                 />
                 <div className="min-w-0">
                   <h3 className="text-lg md:text-xl font-semibold text-pink-primary truncate">
-                    {selectedClothing.name}
+                    adads
                   </h3>
                   <p className="text-sm md:text-base text-gray-600 line-clamp-2">
-                    {selectedClothing.description}
+                    asdadasd
                   </p>
                 </div>
               </motion.div>
@@ -122,11 +122,10 @@ export function ResultScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="relative bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden mx-auto"
+              className="relative bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden mx-auto flex-1 min-h-0"
               style={{
                 aspectRatio: "9/16",
-                maxHeight: "60vh",
-                width: "auto",
+                maxWidth: "100%",
               }}
             >
               {videoUrl ? (
@@ -150,32 +149,32 @@ export function ResultScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.8 }}
-              className="flex flex-col gap-3 md:gap-4"
+              className="flex flex-col gap-2 shrink-0"
             >
               <Button
                 size="lg"
                 onClick={handleDownload}
-                className="flex items-center justify-center gap-2 w-full text-lg font-semibold py-7 rounded-full"
+                className="flex items-center justify-center gap-2 w-full text-base md:text-lg font-semibold py-5 md:py-6 rounded-full"
               >
-                <Download className="w-6 h-6" />
+                <Download className="w-5 h-5 md:w-6 md:h-6" />
                 Download
               </Button>
               <Button
                 size="lg"
-                variant="outline"
+                variant="custom"
                 onClick={() => navigate("/clothing-selection")}
-                className="flex items-center justify-center gap-2 w-full text-lg font-semibold py-7 rounded-full"
+                className="flex items-center justify-center gap-2 w-full text-base md:text-lg font-semibold py-5 md:py-6 rounded-full"
               >
-                <RotateCcw className="w-6 h-6" />
+                <RotateCcw className="w-5 h-5 md:w-6 md:h-6" />
                 Try Another Outfit
               </Button>
               <Button
                 size="lg"
-                variant="outline"
+                variant="custom"
                 onClick={() => navigate("/")}
-                className="flex items-center justify-center gap-2 w-full text-lg font-semibold py-7 rounded-full"
+                className="flex items-center justify-center gap-2 w-full text-base md:text-lg font-semibold py-5 md:py-6 rounded-full"
               >
-                <Home className="w-6 h-6" />
+                <Home className="w-5 h-5 md:w-6 md:h-6" />
                 Back to Home
               </Button>
             </motion.div>

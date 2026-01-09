@@ -32,7 +32,6 @@ export function ErrorDisplay() {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full space-y-6">
         <div className="text-center">
-          <div className="text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-pink-primary font-heading">
             エラーが発生しました
           </h2>
@@ -44,7 +43,7 @@ export function ErrorDisplay() {
           {error.retryable && (
             <Button onClick={handleRetry}>もう一度試す</Button>
           )}
-          <Button variant="outline" onClick={handleDismiss}>
+          <Button variant="custom" onClick={handleDismiss}>
             ホームに戻る
           </Button>
         </div>

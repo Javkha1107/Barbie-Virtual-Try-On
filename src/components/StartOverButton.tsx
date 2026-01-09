@@ -6,7 +6,7 @@ interface StartOverButtonProps {
 
 export function StartOverButton({ onClick }: StartOverButtonProps) {
   return (
-    <Button size="lg" onClick={onClick} variant="outline">
+    <Button size="lg" onClick={onClick} variant="custom">
       もう一度試す
     </Button>
   );

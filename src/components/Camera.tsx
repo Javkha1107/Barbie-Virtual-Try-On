@@ -82,7 +82,7 @@ export function Camera({ onCapture }: CameraProps) {
               <Button onClick={captureImage} className="flex-1">
                 撮影
               </Button>
-              <Button onClick={stopCamera} variant="outline">
+              <Button onClick={stopCamera} variant="custom">
                 <StopCircle className="mr-2 h-4 w-4" />
                 停止
               </Button>

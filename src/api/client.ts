@@ -3,6 +3,7 @@ import type {
   PresignedUrlRequest,
   PresignedUrlResponse,
   GenerationRequest,
+  ImageGenerationRequest,
   GenerationResponse,
   GenerationStatusResponse,
 } from "./types";
@@ -158,5 +159,21 @@ export async function checkGenerationStatus(
     );
   } catch (error) {
     throw createAppError(error, "生成状況の確認に失敗しました。");
+  }
+}
+
+export async function startImageGeneration(
+  request: ImageGenerationRequest
+): Promise<GenerationResponse> {
+  try {
+    return await fetchWithErrorHandling<GenerationResponse>(
+      `${API_BASE_URL}/generate-image`,
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      }
+    );
+  } catch (error) {
+    throw createAppError(error, "画像生成の開始に失敗しました。");
   }
 }

@@ -15,6 +15,12 @@ export interface RecordedVideo {
   mimeType: string;
 }
 
+export interface UploadedImage {
+  blob: Blob;
+  dataUrl: string;
+  fileName: string;
+}
+
 export const ErrorType = {
   CAMERA_ACCESS_DENIED: "CAMERA_ACCESS_DENIED",
   CAMERA_NOT_AVAILABLE: "CAMERA_NOT_AVAILABLE",
@@ -36,23 +42,27 @@ export interface AppError {
 // Global State Interface
 interface AppState {
   recordedVideo: RecordedVideo | null;
+  uploadedImage: UploadedImage | null;
   selectedClothing: ClothingItem | null;
   generatedVideoUrl: string | null;
   isProcessing: boolean;
   error: AppError | null;
   videoKey: string | null;
   jobId: string | null;
+  isImageMode: boolean;
 }
 
 // Context Actions Interface
 interface AppContextType extends AppState {
   setRecordedVideo: (video: RecordedVideo | null) => void;
+  setUploadedImage: (image: UploadedImage | null) => void;
   setSelectedClothing: (clothing: ClothingItem | null) => void;
   setGeneratedVideoUrl: (url: string | null) => void;
   setIsProcessing: (processing: boolean) => void;
   setError: (error: AppError | null) => void;
   setVideoKey: (key: string | null) => void;
   setJobId: (id: string | null) => void;
+  setIsImageMode: (isImageMode: boolean) => void;
   resetState: () => void;
 }
 
@@ -60,6 +70,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [recordedVideo, setRecordedVideo] = useState<RecordedVideo | null>(
+    null
+  );
+  const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(
     null
   );
   const [selectedClothing, setSelectedClothing] = useState<ClothingItem | null>(
@@ -72,32 +85,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<AppError | null>(null);
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [isImageMode, setIsImageMode] = useState(false);
 
   const resetState = () => {
     setRecordedVideo(null);
+    setUploadedImage(null);
     setSelectedClothing(null);
     setGeneratedVideoUrl(null);
     setIsProcessing(false);
     setError(null);
     setVideoKey(null);
     setJobId(null);
+    setIsImageMode(false);
   };
 
   const value: AppContextType = {
     recordedVideo,
+    uploadedImage,
     selectedClothing,
     generatedVideoUrl,
     isProcessing,
     error,
     videoKey,
     jobId,
+    isImageMode,
     setRecordedVideo,
+    setUploadedImage,
     setSelectedClothing,
     setGeneratedVideoUrl,
     setIsProcessing,
     setError,
     setVideoKey,
     setJobId,
+    setIsImageMode,
     resetState,
   };
 

@@ -42,7 +42,6 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen bg-linear-to-br from-pink-50 to-purple-50 flex items-center justify-center p-8">
           <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center space-y-6">
-            <div className="text-6xl">😢</div>
             <h1 className="text-2xl font-bold text-pink-600">
               エラーが発生しました
             </h1>

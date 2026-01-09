@@ -16,11 +16,10 @@ export function ClothingCard({
       onClick={onSelect}
       className={`
         group
-        relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-300
-        ${
-          isSelected
-            ? "ring-4 ring-pink-400 shadow-2xl scale-[1.02]"
-            : "hover:shadow-xl"
+        relative cursor-pointer rounded-2xl overflow-hidden
+        ${isSelected
+          ? "ring-2 ring-pink-300"
+          : "hover:shadow-lg"
         }
       `}
     >
@@ -44,7 +43,7 @@ export function ClothingCard({
       </div>
 
       {isSelected && (
-        <div className="absolute top-3 right-3 bg-pink-500 text-white shadow-xl rounded-full p-2">
+        <div className="absolute top-3 right-3 bg-pink-400 text-white shadow-xl rounded-full p-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-6 w-6"

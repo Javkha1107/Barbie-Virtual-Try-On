@@ -14,6 +14,11 @@ export interface GenerationRequest {
   clothingId: string;
 }
 
+export interface ImageGenerationRequest {
+  imageBytes: string; // base64 encoded
+  garmentId: string;
+}
+
 export interface GenerationResponse {
   jobId: string;
   status: "processing";
