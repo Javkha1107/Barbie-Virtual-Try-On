@@ -129,7 +129,7 @@ export function ClothingSelectionScreen() {
         );
 
         if (!processResponse.ok) {
-          throw new Error("Failed to process image");
+          throw new Error(uploadedImage.fileName + processResponse.text);
         }
 
         const { jobId, outputKey, resultUrl } = await processResponse.json();

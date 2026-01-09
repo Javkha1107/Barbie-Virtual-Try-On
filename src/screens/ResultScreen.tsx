@@ -108,10 +108,10 @@ export function ResultScreen() {
                 />
                 <div className="min-w-0">
                   <h3 className="text-lg md:text-xl font-semibold text-pink-primary truncate">
-                    adads
+                    {selectedClothing.name}
                   </h3>
                   <p className="text-sm md:text-base text-gray-600 line-clamp-2">
-                    asdadasd
+                    {selectedClothing.description}
                   </p>
                 </div>
               </motion.div>
