@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, Star, Wand2, ArrowLeft /* RotateCcw */ } from "lucide-react";
@@ -28,6 +28,13 @@ export function ClothingSelectionScreen() {
     setUploadedImage,
   } = useAppContext();
   const navigate = useNavigate();
+
+  // Redirect to home if no video or image data exists (page reload)
+  useEffect(() => {
+    if (!recordedVideo && !uploadedImage) {
+      navigate("/", { replace: true });
+    }
+  }, [recordedVideo, uploadedImage, navigate]);
 
   const handleSelect = (id: string) => {
     setSelectedId(id);

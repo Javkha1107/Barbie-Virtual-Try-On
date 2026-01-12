@@ -1,24 +1,34 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { Button } from "../components/ui/button";
 import { StarDecoration } from "../components/decorations/StarDecoration";
 import { HeartDecoration } from "../components/decorations/HeartDecoration";
-import { Download, Home, RotateCcw } from "lucide-react";
+import { Download, Home, RotateCcw, Loader2 } from "lucide-react";
 
 export function ResultScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedClothing, recordedVideo } = useAppContext();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const videoUrl =
     location.state?.videoUrl ||
     (recordedVideo ? URL.createObjectURL(recordedVideo.blob) : "");
 
+  // Redirect to home if no video URL exists (page reload)
+  useEffect(() => {
+    if (!videoUrl) {
+      navigate("/", { replace: true });
+    }
+  }, [videoUrl, navigate]);
+
   const handleDownload = async () => {
-    if (!videoUrl) return;
+    if (!videoUrl || isDownloading) return;
 
     try {
+      setIsDownloading(true);
       // 外部URLの場合はfetchでblobを取得してからダウンロード
       const response = await fetch(videoUrl);
       const blob = await response.blob();
@@ -37,6 +47,8 @@ export function ResultScreen() {
       console.error("Download failed:", error);
       // フォールバック: 新しいタブで開く
       window.open(videoUrl, "_blank");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -72,7 +84,7 @@ export function ResultScreen() {
         <HeartDecoration className="absolute bottom-10 right-8 md:bottom-20 md:right-20 scale-75 md:scale-100" />
       </motion.div>
 
-      <div className="w-full h-full max-w-2xl mx-auto flex flex-col py-4 px-4 md:py-6 md:px-8 relative z-10">
+      <div className="w-full max-h-full max-w-2xl mx-auto flex flex-col py-4 px-4 md:py-6 md:px-8 relative z-10">
         {/* Title */}
         {/* <motion.div
           initial={{ opacity: 0, y: -30 }}
@@ -154,10 +166,20 @@ export function ResultScreen() {
               <Button
                 size="lg"
                 onClick={handleDownload}
+                disabled={isDownloading}
                 className="flex items-center justify-center gap-2 w-full text-base md:text-lg font-semibold py-5 md:py-6 rounded-full"
               >
-                <Download className="w-5 h-5 md:w-6 md:h-6" />
-                Download
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 md:w-6 md:h-6" />
+                    Download
+                  </>
+                )}
               </Button>
               <Button
                 size="lg"

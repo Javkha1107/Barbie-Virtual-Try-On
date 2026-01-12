@@ -87,7 +87,9 @@ export function HomeScreen() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-3xl md:text-5xl font-bold text-pink-primary font-heading leading-tight mb-8 md:mb-10"
+          className="text-3xl md:text-5xl font-bold bg-linear-to-r
+           from-pink-600 via-pink-400 to-pink-500 text-transparent bg-clip-text 
+           font-heading leading-tight mb-8 md:mb-10"
         >
           Barbie Virtual Fitting
         </motion.h1>
